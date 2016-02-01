@@ -7,7 +7,19 @@ from ROOT import *
 
 def Array2dto1d(arr):
     print arr.size
-
+    xmin = numpy.amin(arr)
+    xmax = numpy.amax(arr)
+    histAll = TH1F('hist', '', xmax-xmin+1, xmin, xmax)
+    histSig = TH1F('hist', '', xmax-xmin+1, xmin, xmax)
+    for x in numpy.nditer(arr):
+        histAll.Fill(x)
+        if x>750:
+            histSig.Fill(x)
+    canvas = TCanvas()
+    histAll.Draw()
+    canvas.Print('all.png')
+    histSig.Draw()
+    canvas.Print('sig.png')
 
 def ReadImage(fname):
     im = Image.open(fname)
