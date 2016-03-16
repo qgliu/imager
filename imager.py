@@ -22,9 +22,18 @@ def Array2dto1d(arr):
     canvas.Print('sig.png')
 
 def ReadImage(fname):
-    im = Image.open(fname)
-    imarray = numpy.array(im)
-    Array2dto1d(imarray)
+    # im = Image.open(fname)
+    # imarray = numpy.array(im)
+    # Array2dto1d(imarray)
+    frame = Image.open(fname)
+    nframes = 0
+    while frame:
+        nframes = nframes + 1
+        try:
+            frame.seek(nframes)
+        except EOFError:
+            break
+    print nframes
 
 if __name__ == '__main__':
     # verify file
