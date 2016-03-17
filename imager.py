@@ -1,36 +1,42 @@
 #!/usr/bin/env python
 
+# 1) read from a tif movie with multiple frames
+# 2) save background histograms
+# 3) draw
+
 import sys
 from PIL import Image
 import numpy
 from ROOT import *
 
-def Array2dto1d(arr):
-    print arr.size
+froot = TFile.Open('results/im.root', 'recreate')
+
+def AnalyzeImage(arr, index):
     xmin = numpy.amin(arr)
     xmax = numpy.amax(arr)
-    histAll = TH1F('hist', '', xmax-xmin+1, xmin, xmax)
-    histSig = TH1F('hist', '', xmax-xmin+1, xmin, xmax)
-    for x in numpy.nditer(arr):
-        histAll.Fill(x)
+    shape = numpy.shape(arr)
+    inclusive = TH1F('inclusive_{0:d}'.format(index), '', xmax-xmin+1, xmin, xmax)
+    signal_1d = TH1F('signal1D_{0:d}'.format(index), '', xmax-xmin+1, xmin, xmax)
+    signal_2d = TH2F('signal2D_{0:d}'.format(index), '', shape[0], 0, shape[0], shape[1], 0, shape[1])
+    for index, x in numpy.ndenumerate(arr):
+        inclusive.Fill(x)
         if x>750:
-            histSig.Fill(x)
-    canvas = TCanvas()
-    histAll.Draw()
-    canvas.Print('all.png')
-    histSig.Draw()
-    canvas.Print('sig.png')
+            signal_1d.Fill(x)
+            signal_2d.Fill(index[0], index[1], x)
+    inclusive.Write()
+    signal_1d.Write()
+    signal_2d.Write()
 
-def ReadImage(fname):
-    # im = Image.open(fname)
-    # imarray = numpy.array(im)
-    # Array2dto1d(imarray)
-    frame = Image.open(fname)
-    nframes = 0
-    while frame:
-        nframes = nframes + 1
+def RetrieveImage(fname):
+    im = Image.open(fname)
+    nframes = 1
+    while im:
         try:
-            frame.seek(nframes)
+            print 'processing ... {0}'.format(nframes)
+            im.seek(nframes)
+            imarray = numpy.array(im)
+            AnalyzeImage(imarray, nframes)
+            nframes = nframes + 1
         except EOFError:
             break
     print nframes
@@ -45,4 +51,5 @@ if __name__ == '__main__':
         print './imager file.tif (need a tif file)'
         exit(1)
 
-    ReadImage(fname)
+    RetrieveImage(fname)
+    froot.Close()
