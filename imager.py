@@ -9,6 +9,8 @@ from PIL import Image
 import numpy
 from ROOT import *
 
+import background as bkg
+
 froot = TFile.Open('results/im.root', 'recreate')
 
 def AnalyzeImage(arr, index):
@@ -28,17 +30,27 @@ def AnalyzeImage(arr, index):
     signal_2d.Write()
 
 def RetrieveImage(fname):
+    arrStack = [];
     im = Image.open(fname)
     nframes = 1
     while im:
+        if nframes > 100:
+            break
         try:
             print 'processing ... {0}'.format(nframes)
             im.seek(nframes)
             imarray = numpy.array(im)
-            AnalyzeImage(imarray, nframes)
+            arrStack.append(imarray);
+            # bkg.analyze(imarray)
+            # AnalyzeImage(imarray, nframes)
             nframes = nframes + 1
         except EOFError:
             break
+    arr3D = numpy.dstack(arrStack)
+    print arr3D.shape
+    std = numpy.std(arr3D, axis=(0,1))
+    print std.shape
+    print std
     print nframes
 
 if __name__ == '__main__':
