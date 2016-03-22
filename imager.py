@@ -10,6 +10,7 @@ import numpy
 from ROOT import *
 
 import background as bkg
+import tracking
 
 froot = TFile.Open('results/im.root', 'recreate')
 
@@ -34,23 +35,22 @@ def RetrieveImage(fname):
     im = Image.open(fname)
     nframes = 1
     while im:
-        if nframes > 100:
-            break
+        # if nframes>200:
+        #     break
         try:
-            print 'processing ... {0}'.format(nframes)
+            if nframes%100==0:
+                print 'processing ... {0}'.format(nframes)
             im.seek(nframes)
             imarray = numpy.array(im)
-            arrStack.append(imarray);
-            # bkg.analyze(imarray)
+            arrStack.append(imarray)
             # AnalyzeImage(imarray, nframes)
             nframes = nframes + 1
-        except EOFError:
+        except:
             break
-    arr3D = numpy.dstack(arrStack)
+    arr3D = numpy.dstack(arrStack[max(0,len(arrStack)-100):])
     print arr3D.shape
-    std = numpy.std(arr3D, axis=(0,1))
-    print std.shape
-    print std
+    mean, std = bkg.analyze(arr3D)
+    tracking.analyze(arrStack, mean, std)
     print nframes
 
 if __name__ == '__main__':
