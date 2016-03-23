@@ -18,12 +18,12 @@ def AnalyzeImage(arr, index):
     xmin = numpy.amin(arr)
     xmax = numpy.amax(arr)
     shape = numpy.shape(arr)
-    inclusive = TH1F('inclusive_{0:d}'.format(index), '', xmax-xmin+1, xmin, xmax)
+    inclusive = TH1F('inclusive_{0:d}'.format(index), '', 10,0,10)
     signal_1d = TH1F('signal1D_{0:d}'.format(index), '', xmax-xmin+1, xmin, xmax)
     signal_2d = TH2F('signal2D_{0:d}'.format(index), '', shape[0], 0, shape[0], shape[1], 0, shape[1])
     for index, x in numpy.ndenumerate(arr):
         inclusive.Fill(x)
-        if x>750:
+        if x>40:
             signal_1d.Fill(x)
             signal_2d.Fill(index[0], index[1], x)
     inclusive.Write()
@@ -35,7 +35,7 @@ def RetrieveImage(fname):
     im = Image.open(fname)
     nframes = 1
     while im:
-        # if nframes>200:
+        # if nframes>1000:
         #     break
         try:
             if nframes%100==0:
@@ -43,7 +43,8 @@ def RetrieveImage(fname):
             im.seek(nframes)
             imarray = numpy.array(im)
             arrStack.append(imarray)
-            # AnalyzeImage(imarray, nframes)
+            # if nframes==1:
+            #     AnalyzeImage(imarray, nframes)
             nframes = nframes + 1
         except:
             break
