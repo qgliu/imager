@@ -1,4 +1,5 @@
 # analyze signal
+# find significant pixels
 
 import numpy, math
 from ROOT import *
@@ -13,7 +14,9 @@ def analyze(arrStack, mean, std):
     std = numpy.ravel(std)
     mean = numpy.ravel(mean)
 
-    for arr in arrStack:
+    for i, arr in enumerate(arrStack):
+        hsig_tmp  = TH2F('hsig_{0:04d}'.format(i), '', shape[0], 0, shape[0]+1, shape[1], 0, shape[1]+1)
+        # print 'hsig_{0:04d}'.format(i)
         arr = numpy.ravel(arr)
 
         result = numpy.absolute(numpy.subtract(arr, mean))
@@ -30,6 +33,8 @@ def analyze(arrStack, mean, std):
         for index, x in numpy.ndenumerate(signals):
             # print math.floor(signal_indices[index[0]]/shape[0]), math.fmod(signal_indices[index[0]], shape[0]), x
             hsig.Fill(math.floor(signal_indices[index[0]]/shape[0]), math.fmod(signal_indices[index[0]], shape[0]), x)
+            hsig_tmp.Fill(math.floor(signal_indices[index[0]]/shape[0]), math.fmod(signal_indices[index[0]], shape[0]), x)
+        hsig_tmp.Write()
 
     hsig.Write()
     # hsigw.Write()
