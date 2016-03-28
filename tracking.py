@@ -127,6 +127,8 @@ def analyze(arrStack, mean, std):
     mean = numpy.ravel(mean)
 
     for i, arr in enumerate(arrStack):
+        if i%100 == 0:
+            print 'processing ... {0}'.format(i)
         hsig_tmp  = TH2F('hsig_{0:04d}'.format(i), '', shape[0], 0, shape[0]+1, shape[1], 0, shape[1]+1)
         # print 'hsig_{0:04d}'.format(i)
 
