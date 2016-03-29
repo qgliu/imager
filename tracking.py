@@ -71,17 +71,21 @@ def findSingleHit(pixels, pixel_indices, xbin, ybin):
     for h in origin_hit:
         x,y = h[0], h[1]
         true_coord = (x+origin_hit_coord[0], y+origin_hit_coord[1])
-        if (true_coord[0] > 0 and true_coord[0] <= xbin) and (true_coord[1] > 0 and true_coord[1] <= ybin):
+        if (true_coord[0] >= 0 and true_coord[0] <= xbin) and (true_coord[1] >= 0 and true_coord[1] <= ybin):
             true_coord_1d = true_coord[1]*xbin+true_coord[0]
             found = numpy.argwhere(numpy.array(pixel_indices) == true_coord_1d)
             if len(found) > 0:
                 found = found[0][0]
                 pixel_indices.pop(found)
                 pixels.pop(found)
+        #     else:
+        #         print '!found', true_coord
+        # else:
+        #     print 'out box', true_coord
 
     values = numpy.fromiter(iter(origin_hit.values()), dtype='float')
-    average = numpy.sum(values)/numpy.count_nonzero(values)
-    return [origin_hit_coord, average]
+    total = numpy.sum(values)
+    return [origin_hit_coord, total]
 
 def findHits(pixels, pixel_indices, xbin, ybin, iframe):
     # orignal copy
@@ -97,13 +101,15 @@ def findHits(pixels, pixel_indices, xbin, ybin, iframe):
 
     hhits  = TH2F('hhits_{0:04d}'.format(iframe), '', xbin, 0, xbin+1, ybin, 0, ybin+1)
     for hit in hits:
-        hhits.Fill(hit[0][0],hit[0][0],hit[1])
+        # print hit
+        hhits.Fill(hit[0][1],hit[0][0],hit[1])
     hhits.Write()
     return hits
 
 def findPixels(arr, mean, std, iframe):
     # define significance
-    result = numpy.absolute(numpy.subtract(arr, mean))
+    result = numpy.subtract(arr, mean)
+    result = result.clip(min=0)
     result = numpy.divide(result, std)
     result = numpy.trunc(result/12.)
 
@@ -128,18 +134,19 @@ def analyze(arrStack, mean, std):
 
     for i, arr in enumerate(arrStack):
         if i%100 == 0:
-            print 'processing ... {0}'.format(i)
+            print 'processing ... {0}/{1}'.format(i, len(arrStack))
         hsig_tmp  = TH2F('hsig_{0:04d}'.format(i), '', shape[0], 0, shape[0]+1, shape[1], 0, shape[1]+1)
         # print 'hsig_{0:04d}'.format(i)
 
         arr = numpy.ravel(arr)
         pixels, pixel_indices = findPixels(arr, mean, std, i)
-        hits = findHits(pixels, pixel_indices, shape[0], shape[1], i)
 
         for index, x in numpy.ndenumerate(pixels):
             hsig.Fill(math.floor(pixel_indices[index[0]]/shape[0]), math.fmod(pixel_indices[index[0]], shape[0]), x)
             hsig_tmp.Fill(math.floor(pixel_indices[index[0]]/shape[0]), math.fmod(pixel_indices[index[0]], shape[0]), x)
         hsig_tmp.Write()
+
+        hits = findHits(pixels, pixel_indices, shape[0], shape[1], i)
 
     hsig.Write()
     # hsigw.Write()
