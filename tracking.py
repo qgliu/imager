@@ -87,7 +87,8 @@ def findSingleHit(pixels, pixel_indices, xbin, ybin):
     total = numpy.sum(values)
     return [origin_hit_coord, total]
 
-def findHits(pixels, pixel_indices, xbin, ybin, iframe):
+def findHits(pixels, pixel_indices, xbin, ybin, iframe, h3):
+    # print len(pixels)
     # orignal copy
     org_pixels = pixels
     org_pixel_indices = pixel_indices
@@ -99,11 +100,13 @@ def findHits(pixels, pixel_indices, xbin, ybin, iframe):
     #     print len(pixels)
     # print hits
 
-    hhits  = TH2F('hhits_{0:04d}'.format(iframe), '', xbin, 0, xbin+1, ybin, 0, ybin+1)
+    # hhits  = TH2F('hhits_{0:04d}'.format(iframe), '', xbin, 0, xbin+1, ybin, 0, ybin+1)
     for hit in hits:
         # print hit
-        hhits.Fill(hit[0][1],hit[0][0],hit[1])
-    hhits.Write()
+        # hhits.Fill(hit[0][1],hit[0][0],hit[1])
+        # print hit[0][1],hit[0][0], iframe, hit[1]
+        h3.Fill(hit[0][1],hit[0][0], iframe, hit[1])
+    # hhits.Write()
     return hits
 
 def findPixels(arr, mean, std, iframe):
@@ -131,6 +134,7 @@ def analyze(arrStack, mean, std):
     # 2D to 1D
     std = numpy.ravel(std)
     mean = numpy.ravel(mean)
+    h3 = TH3F('h3', '', shape[0], 0, shape[0], shape[1], 0, shape[1], len(arrStack), 0, len(arrStack))
 
     for i, arr in enumerate(arrStack):
         if i%100 == 0:
@@ -146,7 +150,8 @@ def analyze(arrStack, mean, std):
             hsig_tmp.Fill(math.floor(pixel_indices[index[0]]/shape[0]), math.fmod(pixel_indices[index[0]], shape[0]), x)
         hsig_tmp.Write()
 
-        hits = findHits(pixels, pixel_indices, shape[0], shape[1], i)
+        hits = findHits(pixels, pixel_indices, shape[0], shape[1], i, h3)
 
-    hsig.Write()
+    h3.Write()
+    # hsig.Write()
     # hsigw.Write()
