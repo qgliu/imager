@@ -12,7 +12,28 @@ from ROOT import *
 import background as bkg
 import tracking
 
-froot = TFile.Open('results/im.root', 'recreate')
+from classes.pixel import Pixel
+
+# froot = TFile.Open('results/im.root', 'recreate')
+
+def writeRoot(data):
+    fout = TFile.Open('results/waveform.root', 'recreate')
+    # print data
+    data = numpy.dstack(data)
+    print data.shape
+    print data[2,0]
+    vec_list = []
+    h3 = TH3F('h3', '', data.shape[0], 0, data.shape[0], data.shape[1], 0, data.shape[1], data.shape[2], 0, data.shape[2])
+    for x in range(data.shape[0]):
+        for y in range(data.shape[1]):
+            tmp = Pixel(data[x,y])
+            threshold = tmp.Analyze(x, y, h3)
+    h3.Write()
+    fout.Close()
+    # vec = vector('double')()
+    # for value in data:
+    #     print value.shape
+
 
 def AnalyzeImage(arr, index):
     xmin = numpy.amin(arr)
@@ -35,7 +56,7 @@ def RetrieveImage(fname):
     im = Image.open(fname)
     nframes = 1
     while im:
-        # if nframes>500:
+        # if nframes>10:
         #     break
         try:
             if nframes%100==0:
@@ -48,11 +69,12 @@ def RetrieveImage(fname):
             nframes = nframes + 1
         except:
             break
-    arr3D = numpy.dstack(arrStack[max(0,len(arrStack)-100):])
-    print arr3D.shape
-    mean, std = bkg.analyze(arr3D)
-    tracking.analyze(arrStack[-500:], mean, std)
-    print nframes
+    writeRoot(arrStack)
+    # arr3D = numpy.dstack(arrStack[max(0,len(arrStack)-100):])
+    # print arr3D.shape
+    # mean, std = bkg.analyze(arr3D)
+    # tracking.analyze(arrStack, mean, std)
+    # print nframes
 
 if __name__ == '__main__':
     # verify file
@@ -65,4 +87,4 @@ if __name__ == '__main__':
         exit(1)
 
     RetrieveImage(fname)
-    froot.Close()
+    # froot.Close()
