@@ -27,10 +27,12 @@ def DrawHitSize(cursor):
     h.GetYaxis().SetTitle('Hit size')
     h.SetTitle('Max: {0} Min: {1}'.format(max_size, min_size))
     canvas.Print('hitsize.pdf')
+    canvas.Print('hitsize.png')
 
     hprofile = h.ProfileX()
     hprofile.Draw()
     canvas.Print('hitsize_profile.pdf')
+    canvas.Print('hitsize_profile.png')
 
 def DrawNumberofHits(cursor):
     hits = []
@@ -50,9 +52,10 @@ def DrawNumberofHits(cursor):
     gr.GetXaxis().SetTitle('Frame index')
     gr.GetYaxis().SetTitle('Number of hits')
     canvas.Print('hits_stat.pdf')
+    canvas.Print('hits_stat.png')
 
 
 if __name__=='__main__':
     cursor = db.frames.find()
-    # DrawNumberofHits(cursor)
+    #DrawNumberofHits(cursor)
     DrawHitSize(cursor)

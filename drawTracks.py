@@ -4,6 +4,7 @@ import sys
 from ROOT import *
 from array import array
 from pymongo import MongoClient
+import csv
 
 client = MongoClient()
 db = client.imager
@@ -12,7 +13,7 @@ def DrawTrack(cursor):
     hist = []
     count = 0
     for doc in cursor:
-        if len(doc['hits'])<100:
+        if len(doc['hits'])<2000:
             continue
         count=count+1
         h = TH2F('h{0}'.format(count),'',500,0,500,500,0,500)
@@ -26,9 +27,23 @@ def DrawTrack(cursor):
     hist[0].Draw()
     for h in hist[1:]:
         h.Draw('same')
+    hist[0].SetTitle('{0} selected tracks'.format(len(hist)))
     canvas.Print('track2D.pdf')
+    canvas.Print('track2D.png')
 
+def ExportToExcel(cursor):
+    count = 1
+    for doc in cursor:
+        if len(doc['hits'])<2000:
+            continue
+        with open('track_{0}.csv'.format(count), 'wb') as csvfile:
+            fout = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            for hit in doc['hits']:
+                row = [hit['iframe'], hit['x'], hit['y'], hit['size']]
+                # print row
+                fout.writerow(row)
 
+        count = count+1
 
 def DrawNumberofTrack(cursor):
     h = TH1F('h','',5000,0,5000)
@@ -49,9 +64,11 @@ def DrawNumberofTrack(cursor):
     h.SetTitle('Max: {0}, Min: {1}'.format(max_size, min_size))
     h.GetXaxis().SetTitle('Number of hits in a track')
     canvas.Print('tracks_stat.pdf')
+    canvas.Print('tracks_stat.png')
 
 
 if __name__=='__main__':
-    cursor = db.tracks.find()
+    cursor = db.track18158.find()
     # DrawNumberofTrack(cursor)
-    DrawTrack(cursor)
+    # DrawTrack(cursor)
+    ExportToExcel(cursor)
