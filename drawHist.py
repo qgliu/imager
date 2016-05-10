@@ -54,8 +54,18 @@ def DrawNumberofHits(cursor):
     canvas.Print('hits_stat.pdf')
     canvas.Print('hits_stat.png')
 
+def DrawStacked(cursor):
+    h = TH2F('h', '', 386,0,386,386,0,386)
+    for doc in cursor:
+        hits = doc['hits']
+        for hit in hits:
+            h.SetBinContent(hit['x'], hit['y'],hit['size'])
+    canvas = TCanvas('canvas', '', 400,400)
+    h.Draw()
+    canvas.Print('hits_stacked.pdf')
 
 if __name__=='__main__':
     cursor = db.frames.find()
     #DrawNumberofHits(cursor)
-    DrawHitSize(cursor)
+    # DrawHitSize(cursor)
+    DrawStacked(cursor)

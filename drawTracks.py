@@ -9,6 +9,33 @@ import csv
 client = MongoClient()
 db = client.imager
 
+def DrawTrackIntensity(cursor):
+    hist = []
+    count = 0
+    for doc in cursor:
+        if len(doc['hits'])<2000:
+            continue
+        count=count+1
+        h = TH1F('h{0}'.format(count), '', 4500,0,4500)
+        # h = TH2F('h{0}'.format(count),'',500,0,500,500,0,500)
+        for hit in doc['hits']:
+            # h.Fill(hit['x'],hit['y'],hit['size'])
+            h.SetBinContent(hit['iframe'], hit['size'])
+        h.SetLineColor(kBlue)
+        h.SetLineWidth(2)
+        hist.append(h)
+    print len(hist)
+
+    canvas= TCanvas()
+    hist[0].Draw('L')
+    canvas.Print('trackIntensity.pdf(', 'pdf')
+    for h in hist[1:-1]:
+        h.Draw('L')
+        canvas.Print('trackIntensity.pdf', 'pdf')
+    hist[-1].Draw('L')
+    canvas.Print('trackIntensity.pdf)', 'pdf')
+
+
 def DrawTrack(cursor):
     hist = []
     count = 0
@@ -68,7 +95,8 @@ def DrawNumberofTrack(cursor):
 
 
 if __name__=='__main__':
-    cursor = db.track18158.find()
+    cursor = db.tracks.find()
     # DrawNumberofTrack(cursor)
     # DrawTrack(cursor)
-    ExportToExcel(cursor)
+    # ExportToExcel(cursor)
+    DrawTrackIntensity(cursor)
