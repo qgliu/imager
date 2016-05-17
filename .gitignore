@@ -3,5 +3,6 @@
 *.pdf
 results/*
 talks/*
+data/*
 
 *.pyc

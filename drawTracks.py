@@ -21,11 +21,11 @@ def GetTrackMax(cursor):
 def DrawTrackIntensity(cursor):
     hist = []
     count = 0
-    for doc in cursor:
+    for index, doc in enumerate(cursor):
         if len(doc['hits'])<2000:
             continue
         count=count+1
-        h = TH1F('h{0}'.format(count), '', 4500,0,4500)
+        h = TH1F('h{0}'.format(index), '', 4500,0,4500)
         # h = TH2F('h{0}'.format(count),'',500,0,500,500,0,500)
         for hit in doc['hits']:
             # h.Fill(hit['x'],hit['y'],hit['size'])
@@ -104,9 +104,9 @@ def DrawNumberofTrack(cursor):
 
 
 if __name__=='__main__':
-    cursor = db.track18158.find()
+    cursor = db.tracks.find()
     # DrawNumberofTrack(cursor)
     # DrawTrack(cursor)
     # ExportToExcel(cursor)
-    # DrawTrackIntensity(cursor)
-    GetTrackMax(cursor)
+    DrawTrackIntensity(cursor)
+    # GetTrackMax(cursor)

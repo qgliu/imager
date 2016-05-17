@@ -9,104 +9,70 @@ import csv
 client = MongoClient()
 db = client.imager
 
-def GetTrackMax(cursor):
-    for doc in cursor:
-        if len(doc['hits'])<2000:
+
+def FindMatchedTrack(cursor_c2, max_time_c1):
+    matched_index  = -1
+    time_diff = 9999
+    time_diff_prev = time_diff
+    cursor_c2.rewind()
+    for index, track in enumerate(cursor_c2):
+        if len(track['hits'])<2000:
             continue
-        sizes=[]
-        for hit in doc['hits']:
-            sizes.append(hit['size'])
-        print max(sizes)
+        max_time  = 0;
+        max_size = 0;
+        for hit in track['hits']:
+            if hit['size']>max_size:
+                max_size = hit['size']
+                max_time = hit['iframe']
+        if time_diff > abs(max_time-max_time_c1):
+            time_diff_prev = time_diff
+            time_diff = abs(max_time-max_time_c1)
+            matched_index = index
+    print matched_index, time_diff
+    if time_diff > 50:
+        return None, None, None, None
+    else:
+        hist_c2 = TH2F('hist_c2_{0}'.format(matched_index), '', 386, 0, 386, 386, 0, 386)
+        cursor_c2.rewind()
+        track = cursor_c2[matched_index]
+        for hit in track['hits']:
+            hist_c2.Fill(hit['x'], hit['y'], hit['size'])
+        hist_c2.GetXaxis().SetTitle('Start: {0}, end: {1}'.format(track['hits'][-1]['iframe'], track['hits'][0]['iframe']))
+        return hist_c2, matched_index, time_diff, time_diff_prev
 
-def DrawTrackIntensity(cursor):
-    hist = []
-    count = 0
-    for doc in cursor:
-        if len(doc['hits'])<2000:
+
+def MatchTracks(cursor_c1, cursor_c2):
+    cursor_c1.rewind()
+    for index, track in enumerate(cursor_c1):
+        if len(track['hits'])<2000:
             continue
-        count=count+1
-        h = TH1F('h{0}'.format(count), '', 4500,0,4500)
-        # h = TH2F('h{0}'.format(count),'',500,0,500,500,0,500)
-        for hit in doc['hits']:
-            # h.Fill(hit['x'],hit['y'],hit['size'])
-            h.SetBinContent(hit['iframe'], hit['size'])
-        h.SetLineColor(kBlue)
-        h.SetLineWidth(2)
-        hist.append(h)
-    print len(hist)
+        max_time  = 0
+        max_size  = 0
+        hist_c1 = TH2F('hist_c1_{0}'.format(index), '', 386, 0, 386, 386, 0, 386)
+        for hit in track['hits']:
+            hist_c1.Fill(hit['x'], hit['y'], hit['size'])
+            if hit['size']>max_size:
+                max_size = hit['size']
+                max_time = hit['iframe']
+        hist_c1.GetXaxis().SetTitle('Start: {0}, end: {1}'.format(track['hits'][-1]['iframe'], track['hits'][0]['iframe']))
+        print index, max_time
+        hist_c2, matched_index, time_diff, time_diff_prev = FindMatchedTrack(cursor_c2, max_time)
 
-    canvas= TCanvas()
-    hist[0].Draw('L')
-    canvas.Print('trackIntensity.pdf(', 'pdf')
-    for h in hist[1:-1]:
-        h.Draw('L')
-        canvas.Print('trackIntensity.pdf', 'pdf')
-    hist[-1].Draw('L')
-    canvas.Print('trackIntensity.pdf)', 'pdf')
+        canvas = TCanvas('canvas', '', 800,400)
+        canvas.Divide(2,1)
+        canvas.cd(1)
+        hist_c1.Draw('COLZ')
+        canvas.cd(2)
+        if hist_c2:
+            hist_c1.SetTitle('Time diff: {0}, next: {1}'.format(time_diff, time_diff_prev))
+            hist_c2.Draw('COLZ')
+        else:
+            print 'no match'
 
-
-def DrawTrack(cursor):
-    hist = []
-    count = 0
-    for doc in cursor:
-        if len(doc['hits'])<2000:
-            continue
-        count=count+1
-        h = TH2F('h{0}'.format(count),'',500,0,500,500,0,500)
-        for hit in doc['hits']:
-            h.Fill(hit['x'],hit['y'],hit['size'])
-        h.SetMarkerColor(count%10+1)
-        hist.append(h)
-    print len(hist)
-
-    canvas= TCanvas()
-    hist[0].Draw()
-    for h in hist[1:]:
-        h.Draw('same')
-    hist[0].SetTitle('{0} selected tracks'.format(len(hist)))
-    canvas.Print('track2D.pdf')
-    canvas.Print('track2D.png')
-
-def ExportToExcel(cursor):
-    count = 1
-    for doc in cursor:
-        if len(doc['hits'])<2000:
-            continue
-        with open('track_{0}.csv'.format(count), 'wb') as csvfile:
-            fout = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            for hit in doc['hits']:
-                row = [hit['iframe'], hit['x'], hit['y'], hit['size']]
-                # print row
-                fout.writerow(row)
-
-        count = count+1
-
-def DrawNumberofTrack(cursor):
-    h = TH1F('h','',5000,0,5000)
-    max_size = 0
-    min_size = 5000
-    for doc in cursor:
-        if len(doc['hits'])>20:
-            h.Fill(len(doc['hits']))
-        if max_size < len(doc['hits']):
-            max_size = len(doc['hits'])
-        if min_size > len(doc['hits']):
-            min_size = len(doc['hits'])
-
-    canvas = TCanvas()
-    h.SetLineColor(kBlue)
-    h.SetLineWidth(2)
-    h.Draw()
-    h.SetTitle('Max: {0}, Min: {1}'.format(max_size, min_size))
-    h.GetXaxis().SetTitle('Number of hits in a track')
-    canvas.Print('tracks_stat.pdf')
-    canvas.Print('tracks_stat.png')
+        canvas.Print('matchedTrack_{0}.pdf'.format(index))
 
 
 if __name__=='__main__':
-    cursor = db.track18158.find()
-    # DrawNumberofTrack(cursor)
-    # DrawTrack(cursor)
-    # ExportToExcel(cursor)
-    # DrawTrackIntensity(cursor)
-    GetTrackMax(cursor)
+    cursor_c1 = db.track18158.find()
+    cursor_c2 = db.tracks.find()
+    MatchTracks(cursor_c1, cursor_c2)
