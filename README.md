@@ -5,3 +5,7 @@ A basic python application to read image files and change it to analyzable file 
 - install Pillow. A package replaces PIL (outdated image reader)
 
     sudo pip install Pillow
+
+
+
+![alt text](publicpic/track2D1000.jpg)
