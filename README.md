@@ -9,3 +9,4 @@ A basic python application to read image files and change it to analyzable file 
 
 
 ![alt text](publicpic/track2D1000.jpg)
+![alt text](publicpic/trackIntensity_18158.jpg)
