@@ -1,4 +1,4 @@
-A basic python application to read image files and change it to analyzable file -- data arrays
+Analyze images from explosion, particle tracking, dynamic analysis
 
 -- Qiuguang Liu
 
